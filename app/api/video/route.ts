@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs';
 import Replicate from 'replicate';
 
+import { increaseApiLimit, checkApiLimit } from '@/lib/api-limit';
+
 const replicate = new Replicate({
 	auth: process.env.REPLICATE_API_TOKEN
 });
@@ -18,6 +20,12 @@ export async function POST(req: Request): Promise<NextResponse> {
 
 		if (!prompt) {
 			return new NextResponse('Prompt is required', { status: 400 });
+		}
+
+		const freeTrial = await checkApiLimit();
+
+		if (!freeTrial) {
+			return new NextResponse('Free trial has expired', { status: 403 });
 		}
 
 		const response = await replicate.run(
@@ -40,6 +48,8 @@ export async function POST(req: Request): Promise<NextResponse> {
 				}
 			}
 		);
+
+		await increaseApiLimit();
 
 		return NextResponse.json(response);
 	} catch (error) {
