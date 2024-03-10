@@ -10,12 +10,14 @@ import { formSchema } from './constants';
 import { Form, FormControl, FormField, FormItem } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import axios from 'axios';
+import axios, { AxiosError } from 'axios';
 import { useRouter } from 'next/navigation';
 import { Empty } from '@/components/empty';
 import { Loader } from '@/components/loader';
+import { useProModal } from '@/hooks/use-pro-modal';
 
 const VideoPage = (): React.ReactNode => {
+	const proModal = useProModal();
 	const router = useRouter();
 	const [video, setVideo] = useState<string | undefined>();
 
@@ -40,8 +42,12 @@ const VideoPage = (): React.ReactNode => {
 
 			form.reset();
 		} catch (error) {
-			// TODO: Open Pro Mdal
-			console.log(error);
+			if (error instanceof AxiosError) {
+				if (error?.response?.status === 403) {
+					proModal.onOpen();
+				}
+				console.log(error);
+			}
 		} finally {
 			router.refresh();
 		}

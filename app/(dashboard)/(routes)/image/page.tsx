@@ -20,12 +20,14 @@ import {
 	SelectTrigger,
 	SelectValue
 } from '@/components/ui/select';
-import axios from 'axios';
+import axios, { AxiosError } from 'axios';
 import { Empty } from '@/components/empty';
 import { Loader } from '@/components/loader';
 import { Card, CardFooter } from '@/components/ui/card';
+import { useProModal } from '@/hooks/use-pro-modal';
 
 const ImagePage = (): React.ReactNode => {
+	const proModal = useProModal();
 	const router = useRouter();
 	const [images, setImages] = useState<string[]>([]);
 
@@ -56,8 +58,12 @@ const ImagePage = (): React.ReactNode => {
 
 			form.reset();
 		} catch (error) {
-			// TODO: Open Pro Mdal
-			console.log(error);
+			if (error instanceof AxiosError) {
+				if (error?.response?.status === 403) {
+					proModal.onOpen();
+				}
+				console.log(error);
+			}
 		} finally {
 			router.refresh();
 		}

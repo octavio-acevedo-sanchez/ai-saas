@@ -9,7 +9,7 @@ import { formSchema } from './constants';
 import { Form, FormControl, FormField, FormItem } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import axios from 'axios';
+import axios, { AxiosError } from 'axios';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import type { ChatCompletionMessageParam } from 'openai/resources/index.mjs';
@@ -18,8 +18,10 @@ import { Loader } from '@/components/loader';
 import { cn } from '@/lib/utils';
 import { UserAvatar } from '@/components/user-avatar';
 import { BotAvatar } from '@/components/bot-avatar';
+import { useProModal } from '@/hooks/use-pro-modal';
 
 const ConversationPage = (): React.ReactNode => {
+	const proModal = useProModal();
 	const router = useRouter();
 	const [messages, setMessages] = useState<ChatCompletionMessageParam[]>([]);
 
@@ -50,8 +52,12 @@ const ConversationPage = (): React.ReactNode => {
 
 			form.reset();
 		} catch (error) {
-			// TODO: Open Pro Mdal
-			console.log(error);
+			if (error instanceof AxiosError) {
+				if (error?.response?.status === 403) {
+					proModal.onOpen();
+				}
+				console.log(error);
+			}
 		} finally {
 			router.refresh();
 		}
